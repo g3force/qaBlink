@@ -13,4 +13,11 @@ const (
 type QaBlinkState struct {
 	StatusCode QaBlinkStatusCode
 	Score      uint8
+	Pending    bool
+}
+
+
+type QaBlinkJob interface {
+	Update()
+	State() QaBlinkState
 }

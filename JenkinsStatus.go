@@ -17,27 +17,14 @@ type JenkinsResponse struct {
 	HealthReport [] JenkinsResponseJobHealthReport `json:"healthReport"`
 }
 
-type JenkinsConfigConnection struct {
-	Id      uint8 `json:"id"`
-	User    string `json:"user"`
-	Token   string `json:"token"`
-	BaseUrl string `json:"baseUrl"`
-}
-
-type JenkinsConfigJob struct {
-	Id            uint8 `json:"id"`
-	JobName       string `json:"jobName"`
-	ConnectionRef uint8 `json:"connectionRef"`
-}
-
-type JenkinsConfig struct {
-	Connections [] JenkinsConfigConnection `json:"connections"`
-	Jobs        [] JenkinsConfigJob `json:"jobs"`
-}
-
 type JenkinsJob struct {
-	url   string
+	url string
 	state QaBlinkState
+	QaBlinkJob
+}
+
+func (job *JenkinsJob) State() QaBlinkState {
+	return job.state
 }
 
 func (job *JenkinsJob) Update() {
@@ -119,7 +106,7 @@ func NewJenkinsJob(config *JenkinsConfig, jobId uint8) *JenkinsJob {
 	jobStatus := new(JenkinsJob)
 	job := findJob(config.Jobs, jobId)
 	connection := findConnection(config.Connections, job.ConnectionRef)
-	jobStatus.url = fmt.Sprintf("https://%s:%s@%s/job/%s/api/json",
+	jobStatus.url = fmt.Sprintf("https://%s:%s@%s/%s/api/json",
 		connection.User, connection.Token, connection.BaseUrl, job.JobName)
 	jobStatus.state.StatusCode = UNKNOWN
 	return jobStatus
