@@ -8,27 +8,25 @@ import (
 	"net/http"
 )
 
-type JenkinsResponseJobHealthReport struct {
-	Score uint8 `json:"score"`
+type SonarResponseProjectStatus struct {
+	Status string `json:"status"`
 }
 
-type JenkinsResponse struct {
-	Color        string                           `json:"color"`
-	InQueue      bool                             `json:"inQueue"`
-	HealthReport []JenkinsResponseJobHealthReport `json:"healthReport"`
+type SonarResponse struct {
+	ProjectStatus SonarResponseProjectStatus `json:"projectStatus"`
 }
 
-type JenkinsJob struct {
+type SonarJob struct {
 	url   string
 	state QaBlinkState
 	QaBlinkJob
 }
 
-func (job *JenkinsJob) State() QaBlinkState {
+func (job *SonarJob) State() QaBlinkState {
 	return job.state
 }
 
-func (job *JenkinsJob) Update() {
+func (job *SonarJob) Update() {
 	// Build the request
 	req, err := http.NewRequest("GET", job.url, nil)
 	if err != nil {
@@ -58,43 +56,39 @@ func (job *JenkinsJob) Update() {
 	defer resp.Body.Close()
 
 	// Fill the record with the data from the JSON
-	var jenkinsResponse JenkinsResponse
+	var sonarResponse SonarResponse
 
 	// Use json.Decode for reading streams of JSON data
-	if err := json.NewDecoder(resp.Body).Decode(&jenkinsResponse); err != nil {
-		log.Print(err)
+	if err := json.NewDecoder(resp.Body).Decode(&sonarResponse); err != nil {
+		log.Print("Could not decode json: ", err)
 		job.state.StatusCode = UNKNOWN
 		return
 	}
 
-	if len(jenkinsResponse.HealthReport) > 0 {
-		job.state.Score = jenkinsResponse.HealthReport[0].Score
-	}
-
-	switch jenkinsResponse.Color {
-	case "blue":
+	switch sonarResponse.ProjectStatus.Status {
+	case "OK":
 		job.state.StatusCode = STABLE
-	case "yellow":
+	case "WARN":
 		job.state.StatusCode = UNSTABLE
-	case "red":
+	case "ERROR":
 		job.state.StatusCode = FAILED
-	case "disabled":
+	case "NONE":
 		job.state.StatusCode = DISABLED
 	default:
 		job.state.StatusCode = UNKNOWN
 	}
 }
 
-func findJenkinsJob(jobs []JenkinsConfigJob, jobId uint8) (JenkinsConfigJob, error) {
+func findSonarJob(jobs []SonarConfigJob, jobId uint8) (SonarConfigJob, error) {
 	for _, job := range jobs {
 		if job.Id == jobId {
 			return job, nil
 		}
 	}
-	return JenkinsConfigJob{}, errors.New("Job not found")
+	return SonarConfigJob{}, errors.New("Job not found")
 }
 
-func findJenkinsConnection(connections []JenkinsConfigConnection, id uint8) JenkinsConfigConnection {
+func findSonarConnection(connections []SonarConfigConnection, id uint8) SonarConfigConnection {
 	for _, connection := range connections {
 		if connection.Id == id {
 			return connection
@@ -103,15 +97,15 @@ func findJenkinsConnection(connections []JenkinsConfigConnection, id uint8) Jenk
 	panic("")
 }
 
-func NewJenkinsJob(config *JenkinsConfig, jobId uint8) *JenkinsJob {
-	jobStatus := new(JenkinsJob)
-	job, err := findJenkinsJob(config.Jobs, jobId)
+func NewSonarJob(config *SonarConfig, jobId uint8) *SonarJob {
+	jobStatus := new(SonarJob)
+	job, err := findSonarJob(config.Jobs, jobId)
 	if err != nil {
 		return nil
 	}
-	connection := findJenkinsConnection(config.Connections, job.ConnectionRef)
-	jobStatus.url = fmt.Sprintf("https://%s:%s@%s/%s/api/json",
-		connection.User, connection.Token, connection.BaseUrl, job.JobName)
+	connection := findSonarConnection(config.Connections, job.ConnectionRef)
+	jobStatus.url = fmt.Sprintf("https://%s:@%s/api/qualitygates/project_status?projectKey=%s",
+		connection.Token, connection.BaseUrl, job.ProjectKey)
 	jobStatus.state.StatusCode = UNKNOWN
 	return jobStatus
 }

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"time"
-	"log"
 	"github.com/hink/go-blink1"
+	"log"
+	"time"
 )
 
 type QaBlinkSlot struct {
@@ -13,7 +13,7 @@ type QaBlinkSlot struct {
 
 type QaBlink struct {
 	UpdateInterval uint32
-	Slots          [] QaBlinkSlot
+	Slots          []QaBlinkSlot
 	Blink1Device   *blink1.Device
 }
 
@@ -26,7 +26,15 @@ func NewQaBlink(config *QaBlinkConfig) *QaBlink {
 		var qaSlot QaBlinkSlot
 		qaSlot.Id = slot.Id
 		for _, refId := range slot.RefId {
-			qaSlot.Jobs = append(qaSlot.Jobs, NewJenkinsJob(config.Jenkins, refId))
+			var jenkinsJob = NewJenkinsJob(config.Jenkins, refId)
+			if jenkinsJob != nil {
+				qaSlot.Jobs = append(qaSlot.Jobs, jenkinsJob)
+			} else {
+				var sonarJob = NewSonarJob(config.Sonar, refId)
+				if sonarJob != nil {
+					qaSlot.Jobs = append(qaSlot.Jobs, sonarJob)
+				}
+			}
 		}
 		qaBlink.Slots = append(qaBlink.Slots, qaSlot)
 	}
@@ -98,18 +106,12 @@ func main() {
 
 	device, err := blink1.OpenNextDevice()
 	if err != nil {
-		log.Fatal(err)
-		return
+		qaBlink.UpdateStatus()
+		log.Print(err)
+	} else {
+		go qaBlink.UpdateStatus()
+		qaBlink.Blink1Device = device
+		qaBlink.UpdateBlink()
+		device.Close()
 	}
-	qaBlink.Blink1Device = device
-
-	//var state = blink1.State{Duration: time.Duration(10) * time.Millisecond, Red: 255, Blue: 0, Green: 0, LED: blink1.LED1, FadeTime: time.Duration(10) * time.Millisecond}
-	//var state = blink1.State{Blue: 255}
-	//device.SetState(state)
-	//time.Sleep(time.Duration(1) * time.Second)
-
-	go qaBlink.UpdateStatus()
-	qaBlink.UpdateBlink()
-
-	device.Close()
 }
