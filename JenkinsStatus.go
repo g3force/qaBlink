@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type JenkinsResponseJobHealthReport struct {
@@ -71,18 +72,20 @@ func (job *JenkinsJob) Update() {
 		job.state.Score = jenkinsResponse.HealthReport[0].Score
 	}
 
-	switch jenkinsResponse.Color {
-	case "blue":
+	color := jenkinsResponse.Color
+	if strings.HasPrefix(color, "blue") {
 		job.state.StatusCode = STABLE
-	case "yellow":
+	} else if strings.HasPrefix(color, "yellow") {
 		job.state.StatusCode = UNSTABLE
-	case "red":
+	} else if strings.HasPrefix(color, "red") {
 		job.state.StatusCode = FAILED
-	case "disabled":
+	} else if strings.HasPrefix(color, "disabled") {
 		job.state.StatusCode = DISABLED
-	default:
+	} else {
 		job.state.StatusCode = UNKNOWN
 	}
+
+	job.state.Pending = strings.HasSuffix(color, "anime")
 }
 
 func findJenkinsJob(jobs []JenkinsConfigJob, jobId uint8) (JenkinsConfigJob, error) {
@@ -110,8 +113,8 @@ func NewJenkinsJob(config *JenkinsConfig, jobId uint8) *JenkinsJob {
 		return nil
 	}
 	connection := findJenkinsConnection(config.Connections, job.ConnectionRef)
-	jobStatus.url = fmt.Sprintf("https://%s:%s@%s/%s/api/json",
-		connection.User, connection.Token, connection.BaseUrl, job.JobName)
+	jobStatus.url = fmt.Sprintf("%s/%s/api/json",
+		connection.BaseUrl, job.JobName)
 	jobStatus.state.StatusCode = UNKNOWN
 	return jobStatus
 }

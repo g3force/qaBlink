@@ -47,7 +47,7 @@ func (qaBlink *QaBlink) UpdateStatus() {
 		for _, slot := range qaBlink.Slots {
 			for _, job := range slot.Jobs {
 				job.Update()
-				log.Printf("%d: %v [%v]", slot.Id, job.State().Score, job.State().StatusCode)
+				log.Printf("%d: %v [%v,%v]", slot.Id, job.State().StatusCode, job.State().Pending, job.State().Score)
 			}
 		}
 		time.Sleep(time.Duration(qaBlink.UpdateInterval) * time.Second)
@@ -77,20 +77,23 @@ func (qaBlink *QaBlink) UpdateBlink() {
 	perSlotDuration := time.Duration(500) * time.Millisecond
 	for {
 		for _, slot := range qaBlink.Slots {
-			for id, job := range slot.Jobs {
-				state := toState(job.State())
-				state.FadeTime = time.Duration(100) * time.Millisecond
-				if len(slot.Jobs) == 1 {
-					state.LED = blink1.LEDAll
+			for id := 0; id < 2; id++ {
+				var state blink1.State
+				if id < len(slot.Jobs) {
+					job := slot.Jobs[id]
+					state = toState(job.State())
 				} else {
-					switch id {
-					case 0:
-						state.LED = blink1.LED1
-					case 1:
-						state.LED = blink1.LED2
-					default:
-						state.LED = blink1.LEDAll
-					}
+					state = blink1.State{}
+				}
+
+				state.FadeTime = time.Duration(100) * time.Millisecond
+				switch id {
+				case 0:
+					state.LED = blink1.LED1
+				case 1:
+					state.LED = blink1.LED2
+				default:
+					continue
 				}
 				qaBlink.Blink1Device.SetState(state)
 			}
