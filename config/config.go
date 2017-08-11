@@ -7,9 +7,8 @@ import (
 )
 
 type Slot struct {
-	Id       string   `json:"id"`
-	RefId    []string `json:"refs"`
-	DeviceId uint8    `json:"deviceId"`
+	Id    string   `json:"id"`
+	RefId []string `json:"refs"`
 }
 
 type QaBlinkConfig struct {

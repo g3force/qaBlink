@@ -9,9 +9,8 @@ import (
 )
 
 type QaBlinkSlot struct {
-	Id       string
-	Jobs     []watcher.QaBlinkJob
-	DeviceId uint8
+	Id   string
+	Jobs []watcher.QaBlinkJob
 }
 
 type QaBlink struct {
@@ -26,7 +25,6 @@ func NewQaBlink(config *config.QaBlinkConfig) *QaBlink {
 	for _, slot := range config.Slots {
 		var qaSlot QaBlinkSlot
 		qaSlot.Id = slot.Id
-		qaSlot.DeviceId = slot.DeviceId
 		for _, refId := range slot.RefId {
 			var jenkinsJob = watcher.NewJenkinsJob(config.Jenkins, refId)
 			if jenkinsJob != nil {
@@ -49,7 +47,7 @@ func (qaBlink *QaBlink) UpdateStatus() {
 		for _, slot := range qaBlink.Slots {
 			for jobId, job := range slot.Jobs {
 				job.Update()
-				log.Printf("%20s(job:%d|device:%d): %8v [pending: %5v,score: %3v]", slot.Id, jobId, slot.DeviceId, job.State().StatusCode, job.State().Pending, job.State().Score)
+				log.Printf("%20s(job:%d): %8v [pending: %5v,score: %3v]", slot.Id, jobId, job.State().StatusCode, job.State().Pending, job.State().Score)
 			}
 		}
 		time.Sleep(time.Duration(qaBlink.UpdateInterval) * time.Second)
@@ -79,27 +77,29 @@ func (qaBlink *QaBlink) UpdateBlink() {
 	perSlotDuration := time.Duration(500) * time.Millisecond
 	for {
 		for _, slot := range qaBlink.Slots {
-			for id := 0; id < 2; id++ {
-				var state blink1.State
-				if id < len(slot.Jobs) {
-					job := slot.Jobs[id]
-					state = toState(job.State())
-				} else {
-					state = blink1.State{}
-				}
+			slotId := 0
+			for _, device := range qaBlink.blink1Devices {
+				for ledId := 0; ledId < 2; ledId++ {
+					var state blink1.State
+					if slotId < len(slot.Jobs) {
+						job := slot.Jobs[slotId]
+						state = toState(job.State())
+					} else {
+						state = blink1.State{}
+					}
 
-				state.FadeTime = time.Duration(100) * time.Millisecond
-				switch id {
-				case 0:
-					state.LED = blink1.LED1
-				case 1:
-					state.LED = blink1.LED2
-				default:
-					continue
-				}
+					state.FadeTime = time.Duration(100) * time.Millisecond
+					switch ledId {
+					case 0:
+						state.LED = blink1.LED1
+					case 1:
+						state.LED = blink1.LED2
+					default:
+						continue
+					}
 
-				if slot.DeviceId < uint8(len(qaBlink.blink1Devices)) {
-					qaBlink.blink1Devices[slot.DeviceId].SetState(state)
+					device.SetState(state)
+					slotId++
 				}
 			}
 			time.Sleep(perSlotDuration)
@@ -121,6 +121,7 @@ func main() {
 			log.Print(err)
 			break
 		}
+		device.SetState(blink1.State{Red: 255, Blue: 255})
 		qaBlink.blink1Devices = append(qaBlink.blink1Devices, device)
 	}
 
