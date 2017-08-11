@@ -89,7 +89,7 @@ func (job *JenkinsJob) Update() {
 	job.state.Pending = strings.HasSuffix(color, "anime")
 }
 
-func findJenkinsJob(jobs []config.JenkinsConfigJob, jobId uint8) (config.JenkinsConfigJob, error) {
+func findJenkinsJob(jobs []config.JenkinsConfigJob, jobId string) (config.JenkinsConfigJob, error) {
 	for _, job := range jobs {
 		if job.Id == jobId {
 			return job, nil
@@ -98,16 +98,16 @@ func findJenkinsJob(jobs []config.JenkinsConfigJob, jobId uint8) (config.Jenkins
 	return config.JenkinsConfigJob{}, errors.New("Job not found")
 }
 
-func findJenkinsConnection(connections []config.JenkinsConfigConnection, id uint8) config.JenkinsConfigConnection {
+func findJenkinsConnection(connections []config.JenkinsConfigConnection, id string) config.JenkinsConfigConnection {
 	for _, connection := range connections {
 		if connection.Id == id {
 			return connection
 		}
 	}
-	panic("")
+	panic("Jenkins connection not found: " + id)
 }
 
-func NewJenkinsJob(config *config.JenkinsConfig, jobId uint8) *JenkinsJob {
+func NewJenkinsJob(config *config.JenkinsConfig, jobId string) *JenkinsJob {
 	jobStatus := new(JenkinsJob)
 	job, err := findJenkinsJob(config.Jobs, jobId)
 	if err != nil {

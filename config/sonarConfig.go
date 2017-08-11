@@ -1,15 +1,14 @@
 package config
 
 type SonarConfigConnection struct {
-	Id      uint8  `json:"id"`
-	Token   string `json:"token"`
+	Id      string `json:"id"`
 	BaseUrl string `json:"baseUrl"`
 }
 
 type SonarConfigJob struct {
-	Id            uint8  `json:"id"`
+	Id            string `json:"id"`
 	ProjectKey    string `json:"projectKey"`
-	ConnectionRef uint8  `json:"connectionRef"`
+	ConnectionRef string `json:"connectionRef"`
 }
 
 type SonarConfig struct {

@@ -47,9 +47,9 @@ func (qaBlink *QaBlink) UpdateStatus() {
 	for {
 		log.Printf("Updating %d slots\n", len(qaBlink.Slots))
 		for _, slot := range qaBlink.Slots {
-			for _, job := range slot.Jobs {
+			for jobId, job := range slot.Jobs {
 				job.Update()
-				log.Printf("%10s: %8v [pending: %5v,score: %3v]", slot.Id, job.State().StatusCode, job.State().Pending, job.State().Score)
+				log.Printf("%20s(job:%d|device:%d): %8v [pending: %5v,score: %3v]", slot.Id, jobId, slot.DeviceId, job.State().StatusCode, job.State().Pending, job.State().Score)
 			}
 		}
 		time.Sleep(time.Duration(qaBlink.UpdateInterval) * time.Second)

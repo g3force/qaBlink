@@ -80,7 +80,7 @@ func (job *SonarJob) Update() {
 	}
 }
 
-func findSonarJob(jobs []config.SonarConfigJob, jobId uint8) (config.SonarConfigJob, error) {
+func findSonarJob(jobs []config.SonarConfigJob, jobId string) (config.SonarConfigJob, error) {
 	for _, job := range jobs {
 		if job.Id == jobId {
 			return job, nil
@@ -89,16 +89,16 @@ func findSonarJob(jobs []config.SonarConfigJob, jobId uint8) (config.SonarConfig
 	return config.SonarConfigJob{}, errors.New("Job not found")
 }
 
-func findSonarConnection(connections []config.SonarConfigConnection, id uint8) config.SonarConfigConnection {
+func findSonarConnection(connections []config.SonarConfigConnection, id string) config.SonarConfigConnection {
 	for _, connection := range connections {
 		if connection.Id == id {
 			return connection
 		}
 	}
-	panic("")
+	panic("Sonar connection not found: " + id)
 }
 
-func NewSonarJob(config *config.SonarConfig, jobId uint8) *SonarJob {
+func NewSonarJob(config *config.SonarConfig, jobId string) *SonarJob {
 	jobStatus := new(SonarJob)
 	job, err := findSonarJob(config.Jobs, jobId)
 	if err != nil {

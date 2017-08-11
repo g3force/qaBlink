@@ -1,16 +1,14 @@
 package config
 
 type JenkinsConfigConnection struct {
-	Id      uint8  `json:"id"`
-	User    string `json:"user"`
-	Token   string `json:"token"`
+	Id      string `json:"id"`
 	BaseUrl string `json:"baseUrl"`
 }
 
 type JenkinsConfigJob struct {
-	Id            uint8  `json:"id"`
+	Id            string `json:"id"`
 	JobName       string `json:"jobName"`
-	ConnectionRef uint8  `json:"connectionRef"`
+	ConnectionRef string `json:"connectionRef"`
 }
 
 type JenkinsConfig struct {
