@@ -1,9 +1,10 @@
-package main
+package watcher
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/g3force/qaBlink/config"
 	"log"
 	"net/http"
 	"strings"
@@ -88,16 +89,16 @@ func (job *JenkinsJob) Update() {
 	job.state.Pending = strings.HasSuffix(color, "anime")
 }
 
-func findJenkinsJob(jobs []JenkinsConfigJob, jobId uint8) (JenkinsConfigJob, error) {
+func findJenkinsJob(jobs []config.JenkinsConfigJob, jobId uint8) (config.JenkinsConfigJob, error) {
 	for _, job := range jobs {
 		if job.Id == jobId {
 			return job, nil
 		}
 	}
-	return JenkinsConfigJob{}, errors.New("Job not found")
+	return config.JenkinsConfigJob{}, errors.New("Job not found")
 }
 
-func findJenkinsConnection(connections []JenkinsConfigConnection, id uint8) JenkinsConfigConnection {
+func findJenkinsConnection(connections []config.JenkinsConfigConnection, id uint8) config.JenkinsConfigConnection {
 	for _, connection := range connections {
 		if connection.Id == id {
 			return connection
@@ -106,7 +107,7 @@ func findJenkinsConnection(connections []JenkinsConfigConnection, id uint8) Jenk
 	panic("")
 }
 
-func NewJenkinsJob(config *JenkinsConfig, jobId uint8) *JenkinsJob {
+func NewJenkinsJob(config *config.JenkinsConfig, jobId uint8) *JenkinsJob {
 	jobStatus := new(JenkinsJob)
 	job, err := findJenkinsJob(config.Jobs, jobId)
 	if err != nil {

@@ -1,36 +1,38 @@
 package main
 
 import (
+	"github.com/g3force/qaBlink/config"
+	"github.com/g3force/qaBlink/watcher"
 	"github.com/hink/go-blink1"
 	"log"
 	"time"
 )
 
 type QaBlinkSlot struct {
-	Id   uint8
-	Jobs []QaBlinkJob
+	Id       string
+	Jobs     []watcher.QaBlinkJob
+	DeviceId uint8
 }
 
 type QaBlink struct {
 	UpdateInterval uint32
 	Slots          []QaBlinkSlot
-	Blink1Device   *blink1.Device
+	blink1Devices  []*blink1.Device
 }
 
-func (*QaBlinkState) Update() {}
-
-func NewQaBlink(config *QaBlinkConfig) *QaBlink {
+func NewQaBlink(config *config.QaBlinkConfig) *QaBlink {
 	qaBlink := new(QaBlink)
 	qaBlink.UpdateInterval = config.UpdateInterval
 	for _, slot := range config.Slots {
 		var qaSlot QaBlinkSlot
 		qaSlot.Id = slot.Id
+		qaSlot.DeviceId = slot.DeviceId
 		for _, refId := range slot.RefId {
-			var jenkinsJob = NewJenkinsJob(config.Jenkins, refId)
+			var jenkinsJob = watcher.NewJenkinsJob(config.Jenkins, refId)
 			if jenkinsJob != nil {
 				qaSlot.Jobs = append(qaSlot.Jobs, jenkinsJob)
 			} else {
-				var sonarJob = NewSonarJob(config.Sonar, refId)
+				var sonarJob = watcher.NewSonarJob(config.Sonar, refId)
 				if sonarJob != nil {
 					qaSlot.Jobs = append(qaSlot.Jobs, sonarJob)
 				}
@@ -47,27 +49,27 @@ func (qaBlink *QaBlink) UpdateStatus() {
 		for _, slot := range qaBlink.Slots {
 			for _, job := range slot.Jobs {
 				job.Update()
-				log.Printf("%d: %v [%v,%v]", slot.Id, job.State().StatusCode, job.State().Pending, job.State().Score)
+				log.Printf("%10s: %8v [pending: %5v,score: %3v]", slot.Id, job.State().StatusCode, job.State().Pending, job.State().Score)
 			}
 		}
 		time.Sleep(time.Duration(qaBlink.UpdateInterval) * time.Second)
 	}
 }
 
-func toState(state QaBlinkState) blink1.State {
+func toState(state watcher.QaBlinkState) blink1.State {
 	if state.Pending {
 		return blink1.State{Red: 0, Green: 0, Blue: 255}
 	}
 	switch state.StatusCode {
-	case STABLE:
+	case watcher.STABLE:
 		return blink1.State{Red: 0, Green: 255, Blue: 0}
-	case UNSTABLE:
+	case watcher.UNSTABLE:
 		return blink1.State{Red: 255, Green: 255, Blue: 0}
-	case FAILED:
+	case watcher.FAILED:
 		return blink1.State{Red: 255, Green: 0, Blue: 0}
-	case UNKNOWN:
+	case watcher.UNKNOWN:
 		return blink1.State{Red: 0, Green: 0, Blue: 0}
-	case DISABLED:
+	case watcher.DISABLED:
 		return blink1.State{Red: 255, Green: 0, Blue: 255}
 	}
 	return blink1.State{}
@@ -95,7 +97,10 @@ func (qaBlink *QaBlink) UpdateBlink() {
 				default:
 					continue
 				}
-				qaBlink.Blink1Device.SetState(state)
+
+				if slot.DeviceId < uint8(len(qaBlink.blink1Devices)) {
+					qaBlink.blink1Devices[slot.DeviceId].SetState(state)
+				}
 			}
 			time.Sleep(perSlotDuration)
 		}
@@ -104,17 +109,27 @@ func (qaBlink *QaBlink) UpdateBlink() {
 
 func main() {
 
-	config := NewQaBlinkConfig("config.json")
-	qaBlink := NewQaBlink(config)
+	blinkConfig := config.NewQaBlinkConfig("config.json")
+	qaBlink := NewQaBlink(blinkConfig)
 
-	device, err := blink1.OpenNextDevice()
-	if err != nil {
-		qaBlink.UpdateStatus()
-		log.Print(err)
-	} else {
-		go qaBlink.UpdateStatus()
-		qaBlink.Blink1Device = device
-		qaBlink.UpdateBlink()
-		device.Close()
+	for {
+		device, err := blink1.OpenNextDevice()
+		if device == nil {
+			break
+		}
+		if err != nil {
+			log.Print(err)
+			break
+		}
+		qaBlink.blink1Devices = append(qaBlink.blink1Devices, device)
+	}
+
+	log.Printf("Found %d blink1 devices.\n", len(qaBlink.blink1Devices))
+
+	go qaBlink.UpdateStatus()
+	go qaBlink.UpdateBlink()
+
+	for {
+		time.Sleep(time.Hour)
 	}
 }

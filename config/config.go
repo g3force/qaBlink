@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"bufio"
@@ -7,8 +7,9 @@ import (
 )
 
 type Slot struct {
-	Id    uint8   `json:"id"`
-	RefId []uint8 `json:"refs"`
+	Id       string  `json:"id"`
+	RefId    []uint8 `json:"refs"`
+	DeviceId uint8   `json:"deviceId"`
 }
 
 type QaBlinkConfig struct {

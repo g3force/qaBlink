@@ -1,9 +1,10 @@
-package main
+package watcher
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/g3force/qaBlink/config"
 	"log"
 	"net/http"
 )
@@ -79,16 +80,16 @@ func (job *SonarJob) Update() {
 	}
 }
 
-func findSonarJob(jobs []SonarConfigJob, jobId uint8) (SonarConfigJob, error) {
+func findSonarJob(jobs []config.SonarConfigJob, jobId uint8) (config.SonarConfigJob, error) {
 	for _, job := range jobs {
 		if job.Id == jobId {
 			return job, nil
 		}
 	}
-	return SonarConfigJob{}, errors.New("Job not found")
+	return config.SonarConfigJob{}, errors.New("Job not found")
 }
 
-func findSonarConnection(connections []SonarConfigConnection, id uint8) SonarConfigConnection {
+func findSonarConnection(connections []config.SonarConfigConnection, id uint8) config.SonarConfigConnection {
 	for _, connection := range connections {
 		if connection.Id == id {
 			return connection
@@ -97,15 +98,15 @@ func findSonarConnection(connections []SonarConfigConnection, id uint8) SonarCon
 	panic("")
 }
 
-func NewSonarJob(config *SonarConfig, jobId uint8) *SonarJob {
+func NewSonarJob(config *config.SonarConfig, jobId uint8) *SonarJob {
 	jobStatus := new(SonarJob)
 	job, err := findSonarJob(config.Jobs, jobId)
 	if err != nil {
 		return nil
 	}
 	connection := findSonarConnection(config.Connections, job.ConnectionRef)
-	jobStatus.url = fmt.Sprintf("https://%s:@%s/api/qualitygates/project_status?projectKey=%s",
-		connection.Token, connection.BaseUrl, job.ProjectKey)
+	jobStatus.url = fmt.Sprintf("%s/api/qualitygates/project_status?projectKey=%s",
+		connection.BaseUrl, job.ProjectKey)
 	jobStatus.state.StatusCode = UNKNOWN
 	return jobStatus
 }

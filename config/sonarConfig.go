@@ -1,4 +1,4 @@
-package main
+package config
 
 type SonarConfigConnection struct {
 	Id      uint8  `json:"id"`
