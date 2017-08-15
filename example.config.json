@@ -1,0 +1,55 @@
+{
+  "updateInterval": 30,
+  "slots": [
+    {
+      "id": "EXAMPLE1",
+      "refs": [
+        "JENKINS-EXAMPLE",
+        "SONAR_EXAMPLE",
+        "JENKINS-EXAMPLE",
+        "SONAR_EXAMPLE"
+      ]
+    },
+    {
+      "id": "EXAMPLE2",
+      "refs": [
+        "JENKINS-EXAMPLE2"
+      ]
+    }
+  ],
+  "jenkins": {
+    "connections": [
+      {
+        "id": "jenkins1",
+        "baseUrl": "https://<user>:<token>@example.com/jenkins"
+      }
+    ],
+    "jobs": [
+      {
+        "id": "JENKINS-EXAMPLE",
+        "jobName": "view/GROUP/job/EXAMPLE_JOB",
+        "connectionRef": "jenkins1"
+      },
+      {
+        "id": "JENKINS-EXAMPLE2",
+        "jobName": "/job/EXAMPLE_JOB_2",
+        "connectionRef": "jenkins1"
+      }
+    ]
+  },
+  "sonar": {
+    "connections": [
+      {
+        "id": "sonar1",
+        "baseUrl": "https://<token>:@example.com/sonarqube"
+      }
+    ],
+    "jobs": [
+      {
+        "id": "SONAR_EXAMPLE",
+        "projectKey": "com.example:project",
+        "connectionRef": "sonar1"
+      }
+    ]
+  }
+}
