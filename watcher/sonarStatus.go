@@ -20,11 +20,16 @@ type SonarResponse struct {
 type SonarJob struct {
 	url   string
 	state QaBlinkState
+	id    string
 	QaBlinkJob
 }
 
 func (job *SonarJob) State() QaBlinkState {
 	return job.state
+}
+
+func (job *SonarJob) Id() string {
+	return job.id
 }
 
 func (job *SonarJob) Update() {
@@ -108,5 +113,6 @@ func NewSonarJob(config *config.SonarConfig, jobId string) *SonarJob {
 	jobStatus.url = fmt.Sprintf("%s/api/qualitygates/project_status?projectKey=%s",
 		connection.BaseUrl, job.ProjectKey)
 	jobStatus.state.StatusCode = UNKNOWN
+	jobStatus.id = jobId
 	return jobStatus
 }

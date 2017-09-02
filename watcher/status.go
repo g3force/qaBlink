@@ -19,6 +19,7 @@ type QaBlinkState struct {
 type QaBlinkJob interface {
 	Update()
 	State() QaBlinkState
+	Id() string
 }
 
 func (code QaBlinkStatusCode) String() string {

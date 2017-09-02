@@ -23,11 +23,16 @@ type JenkinsResponse struct {
 type JenkinsJob struct {
 	url   string
 	state QaBlinkState
+	id    string
 	QaBlinkJob
 }
 
 func (job *JenkinsJob) State() QaBlinkState {
 	return job.state
+}
+
+func (job *JenkinsJob) Id() string {
+	return job.id
 }
 
 func (job *JenkinsJob) Update() {
@@ -117,5 +122,6 @@ func NewJenkinsJob(config *config.JenkinsConfig, jobId string) *JenkinsJob {
 	jobStatus.url = fmt.Sprintf("%s/%s/api/json",
 		connection.BaseUrl, job.JobName)
 	jobStatus.state.StatusCode = UNKNOWN
+	jobStatus.id = jobId
 	return jobStatus
 }

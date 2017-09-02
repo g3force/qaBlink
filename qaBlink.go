@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"github.com/g3force/qaBlink/config"
 	"github.com/g3force/qaBlink/watcher"
 	"github.com/hink/go-blink1"
 	"log"
+	"os/exec"
 	"time"
 )
 
@@ -42,15 +44,12 @@ func NewQaBlink(config *config.QaBlinkConfig) *QaBlink {
 }
 
 func (qaBlink *QaBlink) UpdateStatus() {
-	for {
-		log.Printf("Updating %d slots\n", len(qaBlink.Slots))
-		for _, slot := range qaBlink.Slots {
-			for jobId, job := range slot.Jobs {
-				job.Update()
-				log.Printf("%20s(job:%d): %8v [pending: %5v,score: %3v]", slot.Id, jobId, job.State().StatusCode, job.State().Pending, job.State().Score)
-			}
+	log.Printf("Updating %d slots\n", len(qaBlink.Slots))
+	for _, slot := range qaBlink.Slots {
+		for jobId, job := range slot.Jobs {
+			job.Update()
+			log.Printf("%40s(job:%d): %8v [pending: %5v,score: %3v]", job.Id(), jobId, job.State().StatusCode, job.State().Pending, job.State().Score)
 		}
-		time.Sleep(time.Duration(qaBlink.UpdateInterval) * time.Second)
 	}
 }
 
@@ -75,44 +74,44 @@ func toState(state watcher.QaBlinkState) blink1.State {
 
 func (qaBlink *QaBlink) UpdateBlink() {
 	perSlotDuration := time.Duration(500) * time.Millisecond
-	for {
-		for _, slot := range qaBlink.Slots {
-			slotId := 0
-			for _, device := range qaBlink.blink1Devices {
-				for ledId := 0; ledId < 2; ledId++ {
-					var state blink1.State
-					if slotId < len(slot.Jobs) {
-						job := slot.Jobs[slotId]
-						state = toState(job.State())
-					} else {
-						state = blink1.State{}
-					}
-
-					state.FadeTime = time.Duration(100) * time.Millisecond
-					switch ledId {
-					case 0:
-						state.LED = blink1.LED1
-					case 1:
-						state.LED = blink1.LED2
-					default:
-						continue
-					}
-
-					device.SetState(state)
-					slotId++
+	for _, slot := range qaBlink.Slots {
+		slotId := 0
+		for _, device := range qaBlink.blink1Devices {
+			for ledId := 0; ledId < 2; ledId++ {
+				var state blink1.State
+				if slotId < len(slot.Jobs) {
+					job := slot.Jobs[slotId]
+					state = toState(job.State())
+				} else {
+					state = blink1.State{}
 				}
+
+				state.FadeTime = time.Duration(100) * time.Millisecond
+				switch ledId {
+				case 0:
+					state.LED = blink1.LED1
+				case 1:
+					state.LED = blink1.LED2
+				default:
+					continue
+				}
+
+				device.SetState(state)
+				slotId++
 			}
-			time.Sleep(perSlotDuration)
 		}
+		time.Sleep(perSlotDuration)
 	}
 }
 
-func main() {
+func (qaBlink *QaBlink) UpdateDevices() {
 
-	blinkConfig := config.NewQaBlinkConfig("config.json")
-	qaBlink := NewQaBlink(blinkConfig)
-
-	for {
+	newDevices := 0
+	for i := 0; ; i++ {
+		err := exec.Command("blink1-tool", "--red", "-d", fmt.Sprintf("%d", i)).Run()
+		if err != nil && err.Error() != "exit status 1" {
+			log.Print("Could not activate blink-devices by calling blink1-tool", err)
+		}
 		device, err := blink1.OpenNextDevice()
 		if device == nil {
 			break
@@ -123,12 +122,35 @@ func main() {
 		}
 		device.SetState(blink1.State{Red: 255, Blue: 255})
 		qaBlink.blink1Devices = append(qaBlink.blink1Devices, device)
+		newDevices++
 	}
 
-	log.Printf("Found %d blink1 devices.\n", len(qaBlink.blink1Devices))
+	if newDevices > 0 {
+		log.Printf("Found %d new blink1 devices, %d now.\n", newDevices, len(qaBlink.blink1Devices))
+	}
+}
 
-	go qaBlink.UpdateStatus()
-	go qaBlink.UpdateBlink()
+func repeat(f func(), duration time.Duration) {
+	for {
+		time.Sleep(duration)
+		f()
+	}
+}
+
+func main() {
+
+	blinkConfig := config.NewQaBlinkConfig("config.json")
+	qaBlink := NewQaBlink(blinkConfig)
+
+	statusUpdateInterval := time.Duration(qaBlink.UpdateInterval) * time.Second
+	deviceUpdateInterval := statusUpdateInterval
+
+	go qaBlink.UpdateDevices()
+	qaBlink.UpdateStatus()
+
+	go repeat(qaBlink.UpdateStatus, statusUpdateInterval)
+	go repeat(qaBlink.UpdateBlink, 0)
+	go repeat(qaBlink.UpdateDevices, deviceUpdateInterval)
 
 	for {
 		time.Sleep(time.Hour)
