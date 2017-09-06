@@ -1,13 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"github.com/g3force/go-blink1"
 	"github.com/g3force/qaBlink/config"
 	"github.com/g3force/qaBlink/watcher"
 	"log"
 	"os"
-	"os/exec"
 	"time"
 )
 
@@ -111,10 +109,6 @@ func (qaBlink *QaBlink) UpdateDevices() {
 
 	newDevices := 0
 	for i := 0; ; i++ {
-		err := exec.Command("blink1-tool", "--red", "-d", fmt.Sprintf("%d", i)).Run()
-		if err != nil && err.Error() != "exit status 1" {
-			log.Print("Could not activate blink-devices by calling blink1-tool", err)
-		}
 		device, err := blink1.OpenNextDevice()
 		if device == nil {
 			break
