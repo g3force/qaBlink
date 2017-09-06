@@ -2,7 +2,7 @@
 
 Get the current build status from Jenkins and Quality Gate Status from Sonar for multiple projects and report them on a blink1 device.
 
-All stati can be placed to 'slots'. Slots are gone through iterativly with a fixed duration per slot. Stati from jobs can be assigned to an available LED of the blink1 devices that are attached.
+All stati can be placed to 'slots'. Slots are gone through iteratively with a fixed duration per slot. Stati from jobs can be assigned to an available LED of the blink1 devices that are attached.
 
 ## Installation
 
@@ -20,6 +20,3 @@ This project depends on https://github.com/hink/go-blink1/ which makes use of li
 
 Copy example.config.json to config.json and adapt it to your needs. You can define multiple Jenkins and Sonar connections and jobs and assign them to slots.
 
-## Known issues
-
- * https://github.com/hink/go-blink1/issues/3
