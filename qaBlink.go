@@ -2,13 +2,16 @@ package main
 
 import (
 	"fmt"
+	"github.com/g3force/go-blink1"
 	"github.com/g3force/qaBlink/config"
 	"github.com/g3force/qaBlink/watcher"
-	"github.com/hink/go-blink1"
 	"log"
+	"os"
 	"os/exec"
 	"time"
 )
+
+var CONFIG_LOCATIONS = []string{"config.json", os.Getenv("HOME") + "/.qaBlink.json"}
 
 type QaBlinkSlot struct {
 	Id   string
@@ -121,9 +124,10 @@ func (qaBlink *QaBlink) UpdateDevices() {
 			break
 		}
 		device.SetState(blink1.State{Red: 255, Blue: 255})
-		qaBlink.blink1Devices = append(qaBlink.blink1Devices, device)
 		newDevices++
 	}
+
+	qaBlink.blink1Devices = blink1.OpenDevices()
 
 	if newDevices > 0 {
 		log.Printf("Found %d new blink1 devices, %d now.\n", newDevices, len(qaBlink.blink1Devices))
@@ -139,7 +143,14 @@ func repeat(f func(), duration time.Duration) {
 
 func main() {
 
-	blinkConfig := config.NewQaBlinkConfig("config.json")
+	chosenConfig := ""
+	for _, configLocation := range CONFIG_LOCATIONS {
+		if _, err := os.Stat(configLocation); !os.IsNotExist(err) {
+			chosenConfig = configLocation
+			break
+		}
+	}
+	blinkConfig := config.NewQaBlinkConfig(chosenConfig)
 	qaBlink := NewQaBlink(blinkConfig)
 
 	statusUpdateInterval := time.Duration(qaBlink.UpdateInterval) * time.Second
