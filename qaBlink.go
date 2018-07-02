@@ -17,14 +17,14 @@ type QaBlinkSlot struct {
 }
 
 type QaBlink struct {
-	UpdateInterval uint32
-	Slots          []QaBlinkSlot
-	blink1Devices  []*blink1.Device
+	Slots         []QaBlinkSlot
+	blink1Devices []*blink1.Device
+	Config        *config.QaBlinkConfig
 }
 
 func NewQaBlink(config *config.QaBlinkConfig) *QaBlink {
 	qaBlink := new(QaBlink)
-	qaBlink.UpdateInterval = config.UpdateInterval
+	qaBlink.Config = config
 	for _, slot := range config.Slots {
 		var qaSlot QaBlinkSlot
 		qaSlot.Id = slot.Id
@@ -74,7 +74,7 @@ func toState(state watcher.QaBlinkState) blink1.State {
 }
 
 func (qaBlink *QaBlink) UpdateBlink() {
-	perSlotDuration := time.Duration(500) * time.Millisecond
+	perSlotDuration := time.Duration(qaBlink.Config.PerSlotDuration) * time.Millisecond
 	for _, slot := range qaBlink.Slots {
 		slotId := 0
 		for _, device := range qaBlink.blink1Devices {
@@ -87,7 +87,7 @@ func (qaBlink *QaBlink) UpdateBlink() {
 					state = blink1.State{}
 				}
 
-				state.FadeTime = time.Duration(100) * time.Millisecond
+				state.FadeTime = time.Duration(qaBlink.Config.FadeTime) * time.Millisecond
 				switch ledId {
 				case 0:
 					state.LED = blink1.LED1
@@ -147,7 +147,7 @@ func main() {
 	blinkConfig := config.NewQaBlinkConfig(chosenConfig)
 	qaBlink := NewQaBlink(blinkConfig)
 
-	statusUpdateInterval := time.Duration(qaBlink.UpdateInterval) * time.Second
+	statusUpdateInterval := time.Duration(qaBlink.Config.UpdateInterval) * time.Second
 	deviceUpdateInterval := statusUpdateInterval
 
 	go qaBlink.UpdateDevices()

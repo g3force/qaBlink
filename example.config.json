@@ -1,5 +1,7 @@
 {
   "updateInterval": 30,
+  "fadeTime": 50,
+  "perSlotDuration": 100,
   "slots": [
     {
       "id": "EXAMPLE1",
