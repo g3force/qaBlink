@@ -1,8 +1,9 @@
 package config
 
 type SonarConfigConnection struct {
-	Id      string `json:"id"`
-	BaseUrl string `json:"baseUrl"`
+	Id       string `json:"id"`
+	BaseUrl  string `json:"baseUrl"`
+	Selector string `json:"selector"`
 }
 
 type SonarConfigJob struct {

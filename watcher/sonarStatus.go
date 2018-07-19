@@ -110,6 +110,9 @@ func NewSonarJob(config *config.SonarConfig, jobId string) *SonarJob {
 		return nil
 	}
 	connection := findSonarConnection(config.Connections, job.ConnectionRef)
+	if len(connection.Selector) > 0 {
+		return nil
+	}
 	jobStatus.url = fmt.Sprintf("%s/api/qualitygates/project_status?projectKey=%s",
 		connection.BaseUrl, job.ProjectKey)
 	jobStatus.state.StatusCode = UNKNOWN

@@ -36,6 +36,13 @@ func NewQaBlink(config *config.QaBlinkConfig) *QaBlink {
 				var sonarJob = watcher.NewSonarJob(config.Sonar, refId)
 				if sonarJob != nil {
 					qaSlot.Jobs = append(qaSlot.Jobs, sonarJob)
+				} else {
+					var sonarJob = watcher.NewSonar51Job(config.Sonar, refId)
+					if sonarJob != nil {
+						qaSlot.Jobs = append(qaSlot.Jobs, sonarJob)
+					} else {
+						log.Printf("Could not find a job for refId %v in slot %v", refId, slot)
+					}
 				}
 			}
 		}
