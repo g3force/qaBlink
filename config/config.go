@@ -31,7 +31,7 @@ func NewQaBlinkConfig(fileName string) *QaBlinkConfig {
 		panic(err)
 	}
 	if config.UpdateInterval == 0 {
-		config.UpdateInterval = 30
+		config.UpdateInterval = 30000
 	}
 	if config.FadeTime == 0 {
 		config.FadeTime = 50

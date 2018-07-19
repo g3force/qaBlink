@@ -1,5 +1,5 @@
 {
-  "updateInterval": 30,
+  "updateInterval": 30000,
   "fadeTime": 50,
   "perSlotDuration": 100,
   "slots": [

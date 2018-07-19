@@ -147,7 +147,7 @@ func main() {
 	blinkConfig := config.NewQaBlinkConfig(chosenConfig)
 	qaBlink := NewQaBlink(blinkConfig)
 
-	statusUpdateInterval := time.Duration(qaBlink.Config.UpdateInterval) * time.Second
+	statusUpdateInterval := time.Duration(qaBlink.Config.UpdateInterval) * time.Millisecond
 	deviceUpdateInterval := statusUpdateInterval
 
 	go qaBlink.UpdateDevices()
