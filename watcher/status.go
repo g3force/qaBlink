@@ -25,13 +25,13 @@ type QaBlinkJob interface {
 func (code QaBlinkStatusCode) String() string {
 	switch code {
 	case STABLE:
-		return "STABLE"
+		return "\033[1;32m STABLE \033[0m"
 	case UNSTABLE:
-		return "UNSTABLE"
+		return "\033[1;33mUNSTABLE\033[0m"
 	case FAILED:
-		return "FAILED"
+		return "\033[1;31m FAILED \033[0m"
 	case UNKNOWN:
-		return "UNKNOWN"
+		return "UNKNOWN "
 	case DISABLED:
 		return "DISABLED"
 	}
