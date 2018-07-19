@@ -1,5 +1,7 @@
 package watcher
 
+import "fmt"
+
 type QaBlinkStatusCode int
 
 const (
@@ -31,9 +33,16 @@ func (code QaBlinkStatusCode) String() string {
 	case FAILED:
 		return "\033[1;31m FAILED \033[0m"
 	case UNKNOWN:
-		return "UNKNOWN "
+		return "\033[1;31mUNKNOWN \033[0m"
 	case DISABLED:
-		return "DISABLED"
+		return "\033[1;33mDISABLED\033[0m"
 	}
 	panic("Unknown status code")
+}
+
+func (s QaBlinkState) String() string {
+	if s.Pending {
+		return fmt.Sprintf("\033[1;46m%v\033[0m", s.StatusCode)
+	}
+	return s.StatusCode.String()
 }

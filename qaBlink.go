@@ -49,7 +49,7 @@ func (qaBlink *QaBlink) UpdateStatus() {
 	for _, slot := range qaBlink.Slots {
 		for jobId, job := range slot.Jobs {
 			job.Update()
-			log.Printf("%40s(job:%d): %8v [pending: %5v,score: %3v]", job.Id(), jobId, job.State().StatusCode, job.State().Pending, job.State().Score)
+			log.Printf("%40s(job:%d): %8v [pending: %5v,score: %3v]", job.Id(), jobId, job.State(), job.State().Pending, job.State().Score)
 		}
 	}
 }
