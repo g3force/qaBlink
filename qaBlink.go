@@ -6,6 +6,8 @@ import (
 	"github.com/g3force/qaBlink/watcher"
 	"log"
 	"os"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -129,6 +131,13 @@ func (qaBlink *QaBlink) UpdateDevices() {
 	}
 
 	qaBlink.blink1Devices = blink1.OpenDevices()
+
+	// sort devices, so that they are always used in the same order
+	sort.Slice(qaBlink.blink1Devices, func(i, j int) bool {
+		s1 := qaBlink.blink1Devices[i].Device.Bus + qaBlink.blink1Devices[i].Device.Device
+		s2 := qaBlink.blink1Devices[j].Device.Bus + qaBlink.blink1Devices[j].Device.Device
+		return strings.Compare(s1, s2) > 0
+	})
 
 	if newDevices > 0 {
 		log.Printf("Found %d new blink1 devices, %d now.\n", newDevices, len(qaBlink.blink1Devices))
